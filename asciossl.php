@@ -121,9 +121,11 @@ function asciossl_updateOrder($params) {
 	try {
 		// setup client
 		$user = $params["configoption1"];
-    	$password = $params["configoption2"];	
+        $password = $params["configoption2"];
+        $testmode = $params["configoption2"]=="on" ? true : false;
+        $wsdl = $testmode ? "https://awstest.ascio.com/v3/aws.wsdl" : "https://aws.ascio.com/v3/aws.wsdl";	
     	$header = new SoapHeader('http://www.ascio.com/2013/02','SecurityHeaderDetails', array('Account'=> $user, 'Password'=>$password), false);
-        $ascioClient     = new ascio\AscioService(array("trace" => true, "encoding" => "ISO-8859-1"));
+        $ascioClient     = new ascio\AscioService(array("trace" => true, "encoding" => "ISO-8859-1"),$wsdl);
 		$ascioClient->__setSoapHeaders($header);
     	// get database data
     	$result = mysql_query("select id,remoteid,status from tblsslorders where serviceid='".$params["serviceid"]."'");
@@ -208,10 +210,12 @@ function asciossl_CreateAccount(array $params)
     try {
         $user = $params["configoption1"];
 		$password = $params["configoption2"];
+        $testmode = $params["configoption3"]=="on" ? true : false;
         $certtype = $params["configoption4"];
         $certyears = $params["configoptions"]["Years"];
+        $wsdl = $testmode ? "https://awstest.ascio.com/v3/aws.wsdl" : "https://aws.ascio.com/v3/aws.wsdl";  
 		$header = new SoapHeader('http://www.ascio.com/2013/02','SecurityHeaderDetails', array('Account'=> $user, 'Password'=>$password), false);
-        $ascioClient     = new ascio\AscioService(array("trace" => true, "encoding" => "ISO-8859-1"));
+        $ascioClient     = new ascio\AscioService(array("trace" => true, "encoding" => "ISO-8859-1"),$wsdl);
 		$ascioClient->__setSoapHeaders($header);
 		$orderRequest = new ascio\AutoInstallSslOrderRequest(ascio\OrderType::Register);
 		$orderRequest->setPeriod($certyears); 
@@ -223,6 +227,9 @@ function asciossl_CreateAccount(array $params)
 		$createOrder = new ascio\CreateOrder($orderRequest);
 		$response = $ascioClient->createOrder($createOrder); 
 		$orderInfo = $response->CreateOrderResult->getOrderInfo();
+        if($response->CreateOrderResult->getResultCode() != 200) {
+            return join(", ",$response->CreateOrderResult->getErrors()->getString());
+        }
 		$orderId = $orderInfo->getOrderId();
          // 1. Create record at WHMCS tblssorders table
         $queryData = array(
