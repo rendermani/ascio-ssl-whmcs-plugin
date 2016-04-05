@@ -572,16 +572,6 @@ function asciossl_AdminServicesTabFieldsSave(array $params)
  */
 function asciossl_ClientArea(array $params)
 {
-    // Determine the requested action and set service call parameters based on
-    // the action.
-    $requestedAction = isset($_REQUEST['customAction']) ? $_REQUEST['customAction'] : '';
-
-    if ($requestedAction == 'manage') {
-        $serviceAction = 'get_usage';
-        $templateFile = 'templates/manage.tpl';
-    } else {
-        $serviceAction = 'get_stats';
-        $templateFile = 'templates/overview.tpl';
-    }
-    return asciossl_updateOrder($params);           
+    $update =  asciossl_updateOrder($params);          
+    return "<p></p><h4>AutoInstallSSL Token:</h4> <span>".$update["AutoInstallSsl Token"]."</span><p></p>";
 }
