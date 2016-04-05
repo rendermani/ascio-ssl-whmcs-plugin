@@ -183,7 +183,7 @@ function asciossl_updateOrder($params) {
 		// setup client
 		$user = $params["configoption1"];
         $password = $params["configoption2"];
-        $testmode = $params["configoption2"]=="on" ? true : false;
+        $testmode = $params["configoption3"]=="on" ? true : false;
         $wsdl = $testmode ? "https://awstest.ascio.com/v3/aws.wsdl" : "https://aws.ascio.com/v3/aws.wsdl";	
     	$header = new SoapHeader('http://www.ascio.com/2013/02','SecurityHeaderDetails', array('Account'=> $user, 'Password'=>$password), false);
         $ascioClient     = new ascio\AscioService(array("trace" => true, "encoding" => "ISO-8859-1"),$wsdl);
@@ -202,8 +202,8 @@ function asciossl_updateOrder($params) {
 			$certificateId = $ascioResult["certificate_id"];
     	} else {
 			// get order - write tblsslorders
-			$orderRequest = new ascio\GetOrderRequest();
-			$orderRequest->setOrderId($orderId);
+			$orderRequest = new ascio\GetOrderRequest();			
+            $orderRequest->setOrderId($orderId);
 			$response = $ascioClient->GetOrder(new ascio\GetOrder($orderRequest));
 			$certificateId = $response->GetOrderResult->GetOrderInfo()->getOrderRequest()->getSslCertificate()->getHandle();
 			$orderStatus = $response->GetOrderResult->GetOrderInfo()->GetStatus();				
@@ -223,14 +223,10 @@ function asciossl_updateOrder($params) {
         // Call the service's function, using the values provided by WHMCS in
         // `$params`.
         $response = array();
-        $tokens = explode("#",$token);
-        $tokenCode = $tokens[0];
-        $tokenId = $tokens[1];
 
         // Return an array based on the function's response.
         return array(
-            'AutoInstallSsl Token Code' => $tokenCode,
-            'AutoInstallSsl Token ID' => $tokenId,
+            'AutoInstallSsl Token' => $token,
             'Ascio Order ID' => $orderId,
             'Ascio Certificate ID' => $certificateId,
             'Status' => $orderStatus
@@ -587,11 +583,5 @@ function asciossl_ClientArea(array $params)
         $serviceAction = 'get_stats';
         $templateFile = 'templates/overview.tpl';
     }
-    $data = asciossl_updateOrder($params);
-    return array(
-            'AutoInstallSsl Token Code' => $data['AutoInstallSsl Token Code'],
-            'AutoInstallSsl Token ID' => $data['AutoInstallSsl Token Code'],
-            'Status' => $data['Status']
-    );
-       
+    return asciossl_updateOrder($params);           
 }
