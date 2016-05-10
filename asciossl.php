@@ -205,6 +205,7 @@ function asciossl_updateOrder($params) {
 			$orderRequest = new ascio\GetOrderRequest();			
             $orderRequest->setOrderId($orderId);
 			$response = $ascioClient->GetOrder(new ascio\GetOrder($orderRequest));
+            if(!$response->GetOrderResult->GetOrderInfo()) return;
 			$certificateId = $response->GetOrderResult->GetOrderInfo()->getOrderRequest()->getSslCertificate()->getHandle();
 			$orderStatus = $response->GetOrderResult->GetOrderInfo()->GetStatus();				
 			update_query("tblsslorders",array("certificate_id" => $certificateId, "status" => $orderStatus),array("id" => $sslOrderData["id"] ));
@@ -213,7 +214,8 @@ function asciossl_updateOrder($params) {
 			$getSslCertificateRequest->setHandle($certificateId);
 			$response = $ascioClient->GetAutoInstallSsl(new ascio\GetAutoInstallSsl($getSslCertificateRequest));
 			$result = $response->GetAutoInstallSslResult->GetAutoInstallSslInfo();
-			$token = $result->getToken();
+			if(!$result) return;
+            $token = $result->getToken();
 			$status = $result->getStatus();				
 			update_query("mod_asciossl",array("status" => $status,"token" => $token), array("id" => $sslOrderData["id"] ));
 		}
@@ -270,14 +272,15 @@ function asciossl_CreateAccount(array $params)
         $testmode = $params["configoption3"]=="on" ? true : false;
         $certtype = $params["configoption4"];
         $certyears = $params["configoptions"]["Years"];
+        $domainName = $params["customfields"]["Domainname"] ? $params["customfields"]["DomainName"] :uniqid("WHMCS-SSL-Token-");
         $wsdl = $testmode ? "https://awstest.ascio.com/v3/aws.wsdl" : "https://aws.ascio.com/v3/aws.wsdl";  
 		$header = new SoapHeader('http://www.ascio.com/2013/02','SecurityHeaderDetails', array('Account'=> $user, 'Password'=>$password), false);
         $ascioClient     = new ascio\AscioService(array("trace" => true, "encoding" => "ISO-8859-1"),$wsdl);
 		$ascioClient->__setSoapHeaders($header);
 		$orderRequest = new ascio\AutoInstallSslOrderRequest(ascio\OrderType::Register);
 		$orderRequest->setPeriod($certyears); 
-		$autoInstallSsl = new ascio\AutoInstallSsl(0);
-		$autoInstallSsl->setCommonName(uniqid("WHMCS-SSL-Token-"));
+		$autoInstallSsl = new ascio\AutoInstallSsl(0);        
+		$autoInstallSsl->setCommonName($domainName);
 		$autoInstallSsl->setProductCode($certtype);
 		//$autoInstallSsl->setEmail($params["customfields"]["Approval Email"]);
 		$orderRequest->setAutoInstallSsl($autoInstallSsl);
