@@ -206,7 +206,7 @@ function asciossl_updateOrder($params) {
             $orderRequest->setOrderId($orderId);
 			$response = $ascioClient->GetOrder(new ascio\GetOrder($orderRequest));
             if(!$response->GetOrderResult->GetOrderInfo()) return;
-			$certificateId = $response->GetOrderResult->GetOrderInfo()->getOrderRequest()->getSslCertificate()->getHandle();
+			$certificateId = $response->GetOrderResult->GetOrderInfo()->getOrderRequest()->GetAutoInstallSsl()->getHandle();
 			$orderStatus = $response->GetOrderResult->GetOrderInfo()->GetStatus();				
 			update_query("tblsslorders",array("certificate_id" => $certificateId, "status" => $orderStatus),array("id" => $sslOrderData["id"] ));
 			// get certificate - write mod_asciossl
@@ -272,7 +272,7 @@ function asciossl_CreateAccount(array $params)
         $testmode = $params["configoption3"]=="on" ? true : false;
         $certtype = $params["configoption4"];
         $certyears = $params["configoptions"]["Years"];
-        $domainName = $params["customfields"]["Domainname"] ? $params["customfields"]["DomainName"] :uniqid("WHMCS-SSL-Token-");
+        $domainName = $params["customfields"]["DomainName"] ? $params["customfields"]["DomainName"] :uniqid("WHMCS-SSL-Token-");
         $wsdl = $testmode ? "https://awstest.ascio.com/v3/aws.wsdl" : "https://aws.ascio.com/v3/aws.wsdl";  
 		$header = new SoapHeader('http://www.ascio.com/2013/02','SecurityHeaderDetails', array('Account'=> $user, 'Password'=>$password), false);
         $ascioClient     = new ascio\AscioService(array("trace" => true, "encoding" => "ISO-8859-1"),$wsdl);
