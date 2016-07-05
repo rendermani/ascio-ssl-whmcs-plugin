@@ -137,7 +137,6 @@
         </div>
     </div>
 {/if}
-
 {foreach from=$configurableoptions item=configoption}
     <div class="row">
         <div class="col-sm-5">
