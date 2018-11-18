@@ -1,6 +1,14 @@
 <?php
-require("ote/autoload.php");
+require_once("v3/service/autoload.php");
+require_once("lib/Contacts.php");
+require_once("lib/Ssl.php");
+require_once("lib/Sans.php");
+require_once("lib/Error.php");
+require_once("lib/Params.php");
+use ascio\whmcs\ssl as ssl;
 use ascio\v3 as ascio;
+
+use Illuminate\Database\Capsule\Manager as Capsule;
 /**
  * WHMCS SDK Sample Provisioning Module
  *
@@ -88,25 +96,6 @@ function asciossl_MetaData()
 function asciossl_ConfigOptions()
 {
     return array(
-        // a text field type allows for single line text input
-        'Username' => array(
-            'Type' => 'text',
-            'Size' => '25',
-            'Default' => '',
-            'Description' => 'Ascio account',
-        ),
-        // a password field type allows for masked text input
-        'Password' => array(
-            'Type' => 'password',
-            'Size' => '25',
-            'Default' => '',
-            'Description' => 'Ascio password',
-        ),
-        // the yesno field type displays a single checkbox option
-        'Testmode' => array(
-            'Type' => 'yesno',
-            'Description' => ' Connected to the OTE',
-        ),
         'CertificateType' => array(
         	'Type' => 'dropdown',
         	'Options' => array(
@@ -173,30 +162,34 @@ function asciossl_ConfigOptions()
                  "uprofessionalid" => "CERTUM Professional ID Certificate",
                  "utrustedssl" => "CERTUM Trusted SSL Certificate",
                  "utrustedwildcard" => "CERTUM Trusted SSL Wildcard Certificate"
-        	)
+            ),                 
         )
-        // the dropdown field type renders a select menu of options
     );
 }
 function asciossl_updateOrder($params) {
-	try {
+    // switch updateOrder (AutoInstallSsl)
+    if( $params["customfields"]["AutoInstallSsl"])  return;
+    try {
 		// setup client
-		$user = $params["configoption1"];
+        // TODO add new credentials with params
+        $user = $params["configoption1"];
         $password = $params["configoption2"];
         $testmode = $params["configoption3"]=="on" ? true : false;
-        $wsdl = $testmode ? "https://awstest.ascio.com/v3/aws.wsdl" : "https://aws.ascio.com/v3/aws.wsdl";	
+        $wsdl = $testmode ? "https://aws.demo.ascio.com/v3/aws.wsdl" : "https://aws.ascio.com/v3/aws.wsdl";	
     	$header = new SoapHeader('http://www.ascio.com/2013/02','SecurityHeaderDetails', array('Account'=> $user, 'Password'=>$password), false);
         $ascioClient     = new ascio\AscioService(array("trace" => true, "encoding" => "ISO-8859-1"),$wsdl);
 		$ascioClient->__setSoapHeaders($header);
     	// get database data
     	$result = mysql_query("select id,remoteid,status from tblsslorders where serviceid='".$params["serviceid"]."'");
     	$sslOrderData = mysql_fetch_assoc($result);   	
-    	$result       = select_query("mod_asciossl","order_id,certificate_id,token",array("id"=>$sslOrderData["id"]));
-    	$ascioResult = mysql_fetch_array($result);
-    	$orderId = $ascioResult["order_id"];
+
+        $result       = select_query("mod_asciossl","order_id,certificate_id,token",array("id"=>$sslOrderData["id"]));
+        $ascioResult = mysql_fetch_array($result);
+
+        $orderId = $sslOrderData["remoteid"];
     	$token   = $ascioResult["token"];
     	$certificateId   = $ascioResult["certificate_id"];
-    	$completed = array("Completed","Failed","Invalid");     	
+    	$completed = array("Completed","Failed","Invalid","Order not validated");     	
     	$orderStatus = $sslOrderData["status"];
     	if(array_search($completed,$orderStatus)) {
 			$certificateId = $ascioResult["certificate_id"];
@@ -204,7 +197,7 @@ function asciossl_updateOrder($params) {
 			// get order - write tblsslorders
 			$orderRequest = new ascio\GetOrderRequest();			
             $orderRequest->setOrderId($orderId);
-			$response = $ascioClient->GetOrder(new ascio\GetOrder($orderRequest));
+            $response = $ascioClient->GetOrder(new ascio\GetOrder($orderRequest));
             if(!$response->GetOrderResult->GetOrderInfo()) return;
 			$certificateId = $response->GetOrderResult->GetOrderInfo()->getOrderRequest()->GetAutoInstallSsl()->getHandle();
 			$orderStatus = $response->GetOrderResult->GetOrderInfo()->GetStatus();				
@@ -266,14 +259,18 @@ function asciossl_updateOrder($params) {
  */
 function asciossl_CreateAccount(array $params)
 {
+    // No AutoInstalSSL
+    if( $params["customfields"]["AutoInstallSsl"] !=="on")  return;
+    // AutoInstalSSL
     try {
+        // TODO add new credentials with params
         $user = $params["configoption1"];
 		$password = $params["configoption2"];
         $testmode = $params["configoption3"]=="on" ? true : false;
         $certtype = $params["configoption4"];
-        $certyears = $params["configoptions"]["Years"];
+        $certyears = $params["configoptions"]["Registration Period (Years)"];
         $domainName = $params["customfields"]["DomainName"] ? $params["customfields"]["DomainName"] :uniqid("WHMCS-SSL-Token-");
-        $wsdl = $testmode ? "https://awstest.ascio.com/v3/aws.wsdl" : "https://aws.ascio.com/v3/aws.wsdl";  
+        $wsdl = $testmode ? "https://aws.demo.ascio.com/v3/aws.wsdl" : "https://aws.ascio.com/v3/aws.wsdl";  
 		$header = new SoapHeader('http://www.ascio.com/2013/02','SecurityHeaderDetails', array('Account'=> $user, 'Password'=>$password), false);
         $ascioClient     = new ascio\AscioService(array("trace" => true, "encoding" => "ISO-8859-1"),$wsdl);
 		$ascioClient->__setSoapHeaders($header);
@@ -300,7 +297,7 @@ function asciossl_CreateAccount(array $params)
             "certtype" => $certtype,
             "status" => $orderInfo->getStatus()
         );
- 	   $sslorderid =insert_query('tblsslorders',$queryData);
+        $orderId = Capsule::table('tblsslorders')->insertGetId($queryData);		
     	// 2. Create record at custom module table
 	    $queryData = array(
     	    'id' => $sslorderid,
@@ -309,7 +306,7 @@ function asciossl_CreateAccount(array $params)
         	'type' => $certtype,
         	'period' => $certyears,
     	);
-    	insert_query('mod_asciossl', $queryData);
+        $orderId = Capsule::table('mod_asciossl')->insert($queryData);
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
@@ -388,6 +385,9 @@ function asciossl_TestConnection(array $params)
         'error' => $errorMsg,
     );
 }
+function asciossl_Renew() {        
+    var_dump("test renew");
+}
 
 /**
  * Additional actions an admin user can invoke.
@@ -401,6 +401,10 @@ function asciossl_TestConnection(array $params)
  */
 function asciossl_AdminCustomButtonArray()
 {
+    // TODO Create Renew
+    // TODO Create Reissue
+    // TODO Create Order SANs
+    // TODO Create Fail
     return array(
         "Renew certificate" => "renew"
     );
@@ -420,7 +424,8 @@ function asciossl_AdminCustomButtonArray()
 function asciossl_ClientAreaCustomButtonArray()
 {
     return array(
-        "Renew certificate" => "renew"
+        "Reissue certificate" => "reissue",
+        "Download certificate" => "download",
     );
 }
 
@@ -573,8 +578,69 @@ function asciossl_AdminServicesTabFieldsSave(array $params)
  *
  * @return array
  */
-function asciossl_ClientArea(array $params)
-{
-    $update =  asciossl_updateOrder($params);          
-    return "<p></p><h4>AutoInstallSSL Token:</h4> <span>".$update["AutoInstallSsl Token"]."</span><p></p>";
+function asciossl_ClientArea(array $whmcsParams)
+{    
+    // autoinstall SSL 
+    if( $params["customfields"]["AutoInstallSsl"] =="on") {
+        return "<p></p><h4>AutoInstallSSL Token:</h4> <span>".$update["AutoInstallSsl Token"]."</span><p></p>";
+    } 
+    $params = new ssl\Params($whmcsParams);
+    $ssl = new ssl\Ssl($params);
+    $contacts = new ssl\SslContacts($params);
+    if($_POST["step"]=="contacts") {        
+        // contact form
+        $contactList = $contacts->getDropDownOptions();
+        $ssl->fromForm();
+        $ssl->writeDb();        
+        $uid = uniqid(); 
+        $pagesVars = array(
+            'tabOverviewReplacementTemplate' => "templates/contacts.tpl",
+            'templateVariables' => array(
+                'contactList' => $contactList,
+                'random'      => $uid  //prevent resubmit
+            )        
+        ); 
+   
+        $pagesVars["templateVariables"] = array_merge($contacts->toForm(), $pagesVars["templateVariables"] ); 
+    } elseif ($_POST["step"]=="register") {
+        // TODO fix this
+        // prevent resubmit
+        if(!$_SESSION["pageUid"]){
+            $_SESSION["pageUid"] = [];
+        }         
+        if(in_array($_POST["random"],$_SESSION["pageUid"] )) {
+            //no resubmit            
+            $ssl->readDb();           
+        } else {
+            $contacts->fromForm();
+            $contacts->writeDb();
+            $result = $ssl->register($contacts);
+        }
+        array_push($_SESSION["pageUid"],$_POST["random"]);          
+        $pagesVars = array(
+            'tabOverviewReplacementTemplate' => "templates/status.tpl",
+            'templateVariables' => array_merge($ssl->toForm(),$result)
+        );      
+    } else { 
+        // read data
+        $data = $ssl->readDb();      
+        $form = $ssl->toForm() ;
+        if($data->code == 200) {
+            // show status
+            $form["statusHtml"] =  $ssl->statusHtml();
+            $form["message"] = $form["status"];
+            $template =  "templates/status.tpl";
+        } else {
+            $form["errors"] = $form["errors"] ?  $form["errors"] :  $data->message;
+            // show certificate parameters                        
+            $template =  "templates/certificate-data.tpl";
+        }
+        $pagesVars = array(
+            'tabOverviewReplacementTemplate' => $template,
+            'templateVariables' => $form       
+        );        
+    }
+  
+    return $pagesVars;
 }
+

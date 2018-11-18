@@ -88,33 +88,44 @@ add_hook('ClientAreaPrimaryNavbar', 1, function ($menu)
  *
  * @param \WHMCS\View\Menu\Item $secondarySidebar
  */
-add_hook('ClientAreaSecondarySidebar', 1, function ($secondarySidebar)
-{
-    // determine if we are on a page containing My Services Actions
-    if (!is_null($secondarySidebar->getChild('My Services Actions'))) {
 
-        // define new sidebar panel
-        $customPanel = $secondarySidebar->addChild('Provisioning Module Sample Panel');
 
-        // set panel attributes
-        $customPanel->moveToFront()
-            ->setIcon('fa-user')
-            ->setBodyHtml(
-                'Your HTML output goes here...'
-            )
-            ->setFooterHtml(
-                'Footer HTML can go here...'
-            );
+// add_hook('ClientAreaSecondarySidebar', 1, function ($secondarySidebar)
+// {
+//     // determine if we are on a page containing My Services Actions
+//     if (!is_null($secondarySidebar->getChild('My Services Actions'))) {
 
-        // define link
-        $customPanel->addChild(
-                'Sample Link Menu Item',
-                array(
-                    'uri' => 'clientarea.php?action=services&module=provisioningmodule',
-                    'icon'  => 'fa-list-alt',
-                    'order' => 2,
-                )
-            );
+//         // define new sidebar panel
+//         $customPanel = $secondarySidebar->addChild('Provisioning Module Sample Panel');
 
-    }
+//         // set panel attributes
+//         $customPanel->moveToFront()
+//             ->setIcon('fa-user')
+//             ->setBodyHtml(
+//                 'Your HTML output goes here...'
+//             )
+//             ->setFooterHtml(
+//                 'Footer HTML can go here...'
+//             );
+
+//         // define link
+//         $customPanel->addChild(
+//                 'Sample Link Menu Item',
+//                 array(
+//                     'uri' => 'clientarea.php?action=services&module=provisioningmodule',
+//                     'icon'  => 'fa-list-alt',
+//                     'order' => 2,
+//                 )
+//             );
+
+//     }
+// });
+
+add_hook('ShoppingCartCheckoutCompletePage', 1, function($vars) {
+    $orderId = $vars["orderId"];
+    /**
+     * Redirect all orders to a different page after the order complete page is loaded.
+     */
+    //return '<META http-equiv="refresh" content="5;URL=http://www.mydomain.com/ownpage.html" />';
+    return "<h1>OrderId:</h1> ".$orderId;
 });
