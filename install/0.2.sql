@@ -1,9 +1,3 @@
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-SET AUTOCOMMIT = 0;
-START TRANSACTION;
-
--- mod_asciossl
-
 ALTER TABLE mod_asciossl ADD `code` int(11)  NULL;
 ALTER TABLE mod_asciossl ADD `message` varchar(1024)  NULL;
 ALTER TABLE mod_asciossl ADD `errors` varchar(4096)  NULL;
@@ -105,6 +99,4 @@ ALTER TABLE `mod_asciossl_settings`
 INSERT INTO `mod_asciossl_settings` (`name`, `value`, `role`) VALUES ( 'DbVersion', '0.2', 'Admin');
 
 INSERT INTO mod_asciossl (user_id,whmcs_service_id,order_id,type,status,module,period,code,message,verification_type)
-SELECT `userid`, `serviceid`, `remoteid`,`certtype`,`status`,'autoinstallssl',1,0,null,"File" FROM `tblsslorders`;
-COMMIT;
-
+SELECT `userid`, `serviceid`, `remoteid`,`certtype`,`status`,'autoinstallssl',1,0,null,"File" FROM `tblsslorders`
