@@ -1,11 +1,3 @@
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-SET AUTOCOMMIT = 0;
-START TRANSACTION;
-
---
---  `mod_asciossl`
---
-
 CREATE TABLE IF NOT EXISTS `mod_asciossl` (
   `id` int(8) NOT NULL AUTO_INCREMENT,
   `user_id` int(8) NOT NULL,
@@ -119,9 +111,6 @@ INSERT INTO `mod_asciossl_settings` (`id`, `name`, `value`, `role`) VALUES
 (4, 'PasswordTesting', '', 'User'),
 (5, 'Environment', '', 'User'),
 (6, 'CreateDns', '1', 'User'),
-(9, 'DbVersion', '0.2', 'Admin');
+(9, 'DbVersion', '0.2', 'Admin')
 
-
-
-COMMIT;
 
