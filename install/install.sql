@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS `mod_asciossl` (
   `ownerEmail` varchar(256) DEFAULT NULL,
   `adminEmail` varchar(256) DEFAULT NULL,
   `techEmail` varchar(256) DEFAULT NULL,
-  `completed_date` DATETIME NULL DEFAULT CURRENT_TIMESTAMP AFTER `module`, 
+  `completed_date` DATETIME NULL DEFAULT CURRENT_TIMESTAMP, 
   `module` varchar(20) NOT NULL DEFAULT 'ssl',  
   PRIMARY KEY (`id`),
   KEY `order_id` (`order_id`),
@@ -112,7 +112,15 @@ ALTER TABLE `mod_asciossl_settings`
   ADD KEY `name` (`name`),
   ADD KEY `role` (`role`);
 
-INSERT INTO `mod_asciossl_settings` (`name`, `value`, `role`) VALUES ( 'DbVersion', '0.2', 'Admin');
+INSERT INTO `mod_asciossl_settings` (`id`, `name`, `value`, `role`) VALUES
+(1, 'Account', '', 'User'),
+(2, 'Password', '', 'User'),
+(3, 'AccountTesting', '', 'User'),
+(4, 'PasswordTesting', '', 'User'),
+(5, 'Environment', '', 'User'),
+(6, 'CreateDns', '1', 'User'),
+(9, 'DbVersion', '0.2', 'Admin');
+
 
 
 COMMIT;
