@@ -31,7 +31,6 @@ class SslCallback extends Callback {
         }
         $this->writeStatus();
         parent::ack();
-        //die();
     } 
     protected function writeCertificateData() {
         Capsule::table("mod_asciossl")
