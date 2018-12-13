@@ -62,6 +62,7 @@ class Dns {
             $createRecord->record = $record;  
             $response = $this->client->CreateRecord($createRecord);
             } catch (\Exception $e) {
+                echo $this->client->__getLastRequest();
                throw  new AscioSystemException($e->faultstring, $e->faultcode);            
             }
         $result = $response->CreateRecordResult;
@@ -105,15 +106,13 @@ class Dns {
         try {
             $createZone = new \CreateZone(); 
             $createZone->zoneName = $this->zoneName;
-            $createZone->owner =$this->account;
-            $createZone->records = $records; 
-
+            $createZone->owner =$this->account;            
             $response = $this->client->CreateZone($createZone);
+            $this->addRecord($records);
            } catch (\Exception $e) {
                var_dump($e);
                echo $this->client->__getLastRequest();
-               die();
-                throw new AscioSystemException($e->faultstring, $e->faultcode);           
+               throw new AscioSystemException($e->faultstring, $e->faultcode);           
            }
        $result = $response->CreateZoneResult;
         if($result->StatusCode !== 200) {
