@@ -1,7 +1,8 @@
 <?php
 require_once(realpath(dirname(__FILE__))."/../../../init.php");
 require_once("lib/Ssl.php");
-
+require_once("lib/Status.php");
+require_once("lib/Sans.php");
 use Illuminate\Database\Capsule\Manager as Capsule;
 use ascio\whmcs\ssl\Ssl;
 use ascio\whmcs\ssl\Params;
