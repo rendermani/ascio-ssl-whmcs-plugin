@@ -61,7 +61,7 @@ ALTER TABLE `mod_asciossl`
 --  mod_asciossl_sans
 
 CREATE TABLE `mod_asciossl_sans` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `service_id` int(11) NOT NULL,
   `name` varchar(256) NOT NULL,
   `verification_type` varchar(255) DEFAULT NULL,
@@ -72,14 +72,12 @@ CREATE TABLE `mod_asciossl_sans` (
   `dns_value` varchar(255) NOT NULL,
   `dns_error_message` varchar(255) NOT NULL,
   `dns_error_code` varchar(255) NOT NULL,
-  `dns_created` tinyint(1) NOT NULL
+  `dns_created` tinyint(1) NOT NULL,
+  PRIMARY KEY (`id`),
+   KEY `whmcs_service_id` (`service_id`),
+   KEY `name` (`name`);
+
 );
-
-
-ALTER TABLE `mod_asciossl_sans`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `whmcs_service_id` (`service_id`),
-  ADD KEY `name` (`name`);
 
 --  mod_asciossl_settings
 
