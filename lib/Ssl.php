@@ -1,12 +1,12 @@
 <?php
 namespace ascio\whmcs\ssl;
 require_once(__DIR__."/../v3/service/autoload.php");
-require_once("Fqdn.php");
-require_once("Dns.php");
-require_once("Domain.php");
-require_once("Error.php");
-require_once("Status.php");
-require_once("Sans.php");
+require_once(__DIR__."/Fqdn.php");
+require_once(__DIR__."/Dns.php");
+require_once(__DIR__."/Domain.php");
+require_once(__DIR__."/Error.php");
+require_once(__DIR__."/Status.php");
+require_once(__DIR__."/Sans.php");
 
 use Illuminate\Database\Capsule\Manager as Capsule;
 use ascio\v3 as v3;
@@ -52,7 +52,7 @@ class Ssl {
         
         $this->data = $params->getData();
         if(!isset($params->account) && !isset($params->testAccount)) return;
-        
+                
         $this->serviceId = $params->serviceId;
         $this->certificateType =$params->certificateType;
         $header = new \SoapHeader("http://www.ascio.com/2013/02","SecurityHeaderDetails", $params->getCredentials(), false);
@@ -109,7 +109,7 @@ class Ssl {
         ->select('mod_asciossl.*','tblhosting.nextduedate', 'tblhosting.billingcycle as period')
         ->join("tblhosting","tblhosting.id","=","mod_asciossl.whmcs_service_id")
         ->where('mod_asciossl.whmcs_service_id',$this->serviceId)
-        ->first(); 
+        ->first();         
         if(isset($data)) {       
             $this->hasDbData = true; 
             $this->fqdn = new Fqdn($data->common_name);
@@ -215,9 +215,10 @@ class Ssl {
         ->where(["domain" => $fqdn->getDomain(), "userid" => $this->data["user_id"]])
         ->where("status", "Active")
         ->first();
-        
+
+
         if(!isset($domain)) {
-               throw new AscioUserException("Domain '".$fqdn->getDomain()."' not found in your account",404,"no_ns_domain");
+               throw new AscioUserException("Domain '".$fqdn->getDomain()."' not found in your Account. ",404,"no_ns_domain");
         }
         
         $domain = new Domain($fqdn->getDomain());
