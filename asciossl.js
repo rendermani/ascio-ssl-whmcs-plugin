@@ -191,6 +191,11 @@ function checkCsr() {
             $("#csrvalid").html(" <span class='glyphicon glyphicon-remove'> </span> Invalid CSR!");
         }
 
+    }).fail(function( jqXHR, textStatus, errorThrown ){
+        console.log("FAIL");
+        console.log(jqXHR);
+        console.log(textStatus);
+        console.log(errorThrown);
     });
     
 }
