@@ -1,10 +1,7 @@
 <?php
 namespace ascio\whmcs\ssl;
-require_once(__DIR__."/../vendor/autoload.php");
-
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Spatie\SslCertificate\SslCertificate;
-
 
 require_once(__DIR__."/../v3/service/autoload.php");
 require_once("Fqdn.php");
@@ -12,7 +9,6 @@ require_once("Dns.php");
 require_once("Domain.php");
 require_once("Error.php");
 require_once("Params.php");
-
 Class Status {
     private $serviceId; 
     /**
