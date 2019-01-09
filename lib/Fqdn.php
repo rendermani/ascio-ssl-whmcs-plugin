@@ -13,7 +13,7 @@ class Fqdn  {
     function __construct($name) 
     {
         if(strpos($name,"*.") !== false) {
-            $name = str_replace("*.",$name);
+            $name = str_replace("*.","",$name);
             $this->isWildCard = true; 
         }
         $this->name = $name;
@@ -55,7 +55,8 @@ class Fqdn  {
         return $wildcard . $this->getFqdn();
     }
     public function getSslAuth() {
-        return "_dnsauth.".$this->getFqdn();
+        $prefix = $this->isWildCard ? "" : "_dnsauth." ;
+        return $prefix .$this->getFqdn();
     }
 
 }
