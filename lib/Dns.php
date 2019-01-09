@@ -50,7 +50,7 @@ class Dns {
     }
     protected function createTXT () {
         $record =  new \TXT();
-        $record->Source = "_dnsauth.".$this->fullDomain;
+        $record->Source = $this->fqdn->getSslAuth();
         $record->Target = $this->dnsValue;
         $record->TTL = 3600;
         return $record; 
@@ -138,7 +138,7 @@ class Dns {
                     return true;
                 }
             }
-            foreach(dns_get_record("_dnsauth.".$this->fqdn->getFqdn(),DNS_TXT) as $key => $record) {
+            foreach(dns_get_record($this->fqdn->getSslAuth(),DNS_TXT) as $key => $record) {
                 if($record["txt"]==$target) {
                     return true;
                 }
