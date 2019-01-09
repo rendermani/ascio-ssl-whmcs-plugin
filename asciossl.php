@@ -424,7 +424,6 @@ function asciossl_AdminCustomButtonArray()
 function asciossl_ClientAreaCustomButtonArray()
 {
     return array(
-        "Reissue certificate" => "reissue",
         "Download certificate" => "download",
     );
 }
@@ -548,29 +547,34 @@ function asciossl_AdminServicesTabFieldsSave(array $params)
     }
 }
 
+function asciossl_download(array $whmcsParams) {
+    $params = new ssl\Params($whmcsParams);
+    $ssl = new ssl\Ssl($params);
+    $sslData = $ssl->readDb();
+    $certificate =  $ssl->getCertificate($ssl->data["certificate_id"]);
+    
+    $name = $ssl->getCertificateConfig()->name."-" .$ssl->fqdn->getFqdn().".crt";
+    $name = str_replace(" ","_",$name);
+
+    header("Content-Description: File Transfer"); 
+    header("Content-Type: application/octet-stream"); 
+    header("Content-Disposition: attachment; filename='".$name."'"); 
+
+    echo ($certificate->getCertificate());
+    die();
+}
+function asciossl_reissue(array $whmcsParams) {
+    $params = new ssl\Params($whmcsParams);
+    $ssl = new ssl\Ssl($params);    
+    $ssl->readDb();
+    $template =  "templates/certificate-data-reissue.tpl";
+    $pagesVars = array(
+        'tabOverviewReplacementTemplate' => $template,
+        'templateVariables' => $ssl->toForm()       
+    );     
+    return $pagesVars;
+}
 /**
- * Client area output logic handling.
- *
- * This function is used to define module specific client area output. It should
- * return an array consisting of a template file and optional additional
- * template variables to make available to that template.
- *
- * The template file you return can be one of two types:
- *
- * * tabOverviewModuleOutputTemplate - The output of the template provided here
- *   will be displayed as part of the default product/service client area
- *   product overview page.
- *
- * * tabOverviewReplacementTemplate - Alternatively using this option allows you
- *   to entirely take control of the product/service overview page within the
- *   client area.
- *
- * Whichever option you choose, extra template variables are defined in the same
- * way. This demonstrates the use of the full replacement.
- *
- * Please Note: Using tabOverviewReplacementTemplate means you should display
- * the standard information such as pricing and billing details in your custom
- * template or they will not be visible to the end user.
  *
  * @param array $params common module parameters
  *
@@ -581,18 +585,57 @@ function asciossl_AdminServicesTabFieldsSave(array $params)
 function asciossl_ClientArea(array $whmcsParams)
 {    
     // autoinstall SSL 
+  
     if( $params["customfields"]["AutoInstallSsl"] =="on") {
         return "<p></p><h4>AutoInstallSSL Token:</h4> <span>".$update["AutoInstallSsl Token"]."</span><p></p>";
     } 
+    if(!$_SESSION["pageUid"]){
+        $_SESSION["pageUid"] = [];
+    }     
+    $uid = uniqid(); 
     $params = new ssl\Params($whmcsParams);
     $ssl = new ssl\Ssl($params);
     $contacts = new ssl\SslContacts($params);
+    
+    if($_POST["step"]=="reissue") {        
+        if(in_array($_POST["random"],$_SESSION["pageUid"] )) {
+            //no resubmit            
+            $ssl->readDb();
+            $result = [];  
+        } else {
+            $ssl->fromForm();
+            $ssl->writeDb();
+            $contacts->readDb();
+            $result = $ssl->reissue($contacts);           
+        }
+        array_push($_SESSION["pageUid"],$_POST["random"]);    
+        $form = [];
+        $form["statusHtml"] =  $ssl->statusHtml();
+        $form["message"] = $form["status"];     
+        $form["certificateName"] = $ssl->getCertificateConfig()->name;   
+        $pagesVars = array(
+            'tabOverviewReplacementTemplate' => "templates/status.tpl",
+            'templateVariables' => array_merge($ssl->toForm(),$result,$form)
+        ); 
+        return $pagesVars;
+    }
+    if($_GET["ordertype"]=="reissue") {
+        $ssl->readDb();
+        $template =  "templates/certificate-data-reissue.tpl";
+        $form =  $ssl->toForm();
+        $form["random"] = $uid;    
+        $pagesVars = array(
+            'tabOverviewReplacementTemplate' => $template,
+            'templateVariables' => $form      
+        );     
+        return $pagesVars;
+    }
     if($_POST["step"]=="contacts") {        
         // contact form
         $contactList = $contacts->getDropDownOptions();
         $ssl->fromForm();
-        $ssl->writeDb();        
-        $uid = uniqid(); 
+        $ssl->writeDb();      
+      
         $pagesVars = array(
             'tabOverviewReplacementTemplate' => "templates/contacts.tpl",
             'templateVariables' => array(
@@ -605,30 +648,36 @@ function asciossl_ClientArea(array $whmcsParams)
     } elseif ($_POST["step"]=="register") {
         // TODO fix this
         // prevent resubmit
-        if(!$_SESSION["pageUid"]){
-            $_SESSION["pageUid"] = [];
-        }         
+               
         if(in_array($_POST["random"],$_SESSION["pageUid"] )) {
             //no resubmit            
-            $ssl->readDb();           
+            $ssl->readDb();
+            $result = [];           
         } else {
             $contacts->fromForm();
             $contacts->writeDb();
+            //TODO: Trigger Renew/Reissue
             $result = $ssl->register($contacts);
         }
-        array_push($_SESSION["pageUid"],$_POST["random"]);          
+        array_push($_SESSION["pageUid"],$_POST["random"]);    
+        $form = [];
+        $form["statusHtml"] =  $ssl->statusHtml();
+        $form["message"] = $form["status"];     
+        $form["certificateName"] = $ssl->getCertificateConfig()->name;      
         $pagesVars = array(
             'tabOverviewReplacementTemplate' => "templates/status.tpl",
-            'templateVariables' => array_merge($ssl->toForm(),$result)
+            'templateVariables' => array_merge($ssl->toForm(),$result,$form)
         );      
     } else { 
         // read data
         $data = $ssl->readDb();      
         $form = $ssl->toForm() ;
+        //TODO: Add reissue/renew
         if($data->code == 200) {
             // show status
             $form["statusHtml"] =  $ssl->statusHtml();
             $form["message"] = $form["status"];
+            $form["certificateName"] = $ssl->getCertificateConfig()->name;
             $template =  "templates/status.tpl";
         } else {
             $form["errors"] = $form["errors"] ?  $form["errors"] :  $data->message;
