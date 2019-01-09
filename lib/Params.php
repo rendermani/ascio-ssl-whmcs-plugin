@@ -12,6 +12,7 @@ class Params {
     public $testPassword;     
     public $testmode;
     public $createDnsRecord;
+    public $requireDomain;
     public $paidSans;
     public $settings; 
     
@@ -24,6 +25,7 @@ class Params {
         $this->testPassword = $settings->PasswordTesting;
         $this->testmode = $settings->Environment ==  'testing' ? true : false;
         $this->createDnsRecord = $settings->CreateDns;
+        $this->requireDomain = $settings->RequireDomain;
         $this->settings = $settings;
 
         if(!$whmcsParameters) return;
@@ -51,6 +53,7 @@ class Params {
             "user_id" => $this->userId,
             "type" => $this->certificateType , 
             "create_dns_record" => $this->createDnsRecord
+            
         ];
     }
     public function getCredentials($forceLive = false) {
