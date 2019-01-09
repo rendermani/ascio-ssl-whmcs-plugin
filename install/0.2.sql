@@ -79,22 +79,18 @@ CREATE TABLE `mod_asciossl_sans` (
 
 );
 
---  mod_asciossl_settings
-
 -- mod_asciossl_settings 
 
 CREATE TABLE `mod_asciossl_settings` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `value` varchar(255) NOT NULL,
-  `role` enum('User','Admin','') NOT NULL DEFAULT 'User'
+  `role` enum('User','Admin','') NOT NULL DEFAULT 'User',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `key` (`name`),
+  KEY `name` (`name`),
+  KEY `role` (`role`)
 );
-
-ALTER TABLE `mod_asciossl_settings`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `key` (`name`),
-  ADD KEY `name` (`name`),
-  ADD KEY `role` (`role`);
 
 INSERT INTO `mod_asciossl_settings` (`id`, `name`, `value`, `role`) VALUES
 (1, 'Account', '', 'User'),
