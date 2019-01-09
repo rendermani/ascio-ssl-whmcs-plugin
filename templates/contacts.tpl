@@ -1,6 +1,6 @@
 <h1>SSL Certificate</h1>
 <script type="text/javascript" src="/whmcs/modules/servers/asciossl/asciossl.js"></script>
-<form role="form" method="post" id="sslForm" action="{$smarty.server.PHP_SELF}?action=productdetails&step=register">
+<form role="form" method="post" id="sslForm" action="{$smarty.server.PHP_SELF}?action=productdetails&step=register&id={$serviceid}">
    <input type="hidden" name="submit" value="true" />
    <input type="hidden" name="step" value="register">
    <input type="hidden" name="random" value="{$random}">

@@ -12,12 +12,13 @@
 </style>
 <h1>SSL Certificate Data</h1>
 <script type="text/javascript" src="/whmcs/modules/servers/asciossl/asciossl.js"></script>
-<form role="form" method="post" id="sslForm" action="{$smarty.server.PHP_SELF}?action=productdetails&step=contacts">
+<form role="form" method="post" id="sslForm" action="{$smarty.server.PHP_SELF}?action=productdetails&step=reissue&id={$whmcs_service_id}">
    <input type="hidden" name="submit" value="true" />
-   <input type="hidden" name="step" value="contacts">
+   <input type="hidden" name="step" value="reissue">
    <input type="hidden" id="domainroot" name="domainroot" value="{$domainroot}">
     <input type="hidden" name="id" value="{$serviceid}">
     <input type="hidden" name="commonName" id="commonName"/>
+    <input type="hidden" name="random" value="{$random}">
         <h2>CSR</h2>
         {if $errors}                    
             <div class="alert alert-danger" role="alert">
@@ -105,10 +106,9 @@
                     <div class="form-group" id="mxverification"></diV>
                  </div>
             </div>
-            {$sans}
             <div class="row">
                 <div class="form-group text-center">
-                    <input class="btn btn-primary" type="submit" id="saveContacts" name="save" value="{$LANG.clientareasavechanges}" />
+                    <input class="btn btn-primary" type="submit" id="saveContacts" name="save" value="Reissue" />
                     <input class="btn btn-default" type="reset" value="{$LANG.cancel}" />            
                 </div>
             
