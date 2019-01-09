@@ -81,8 +81,10 @@ CREATE TABLE `mod_asciossl_sans` (
 
 --  mod_asciossl_settings
 
+-- mod_asciossl_settings 
+
 CREATE TABLE `mod_asciossl_settings` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `value` varchar(255) NOT NULL,
   `role` enum('User','Admin','') NOT NULL DEFAULT 'User'
@@ -94,7 +96,15 @@ ALTER TABLE `mod_asciossl_settings`
   ADD KEY `name` (`name`),
   ADD KEY `role` (`role`);
 
-INSERT INTO `mod_asciossl_settings` (`name`, `value`, `role`) VALUES ( 'DbVersion', '0.2', 'Admin');
+INSERT INTO `mod_asciossl_settings` (`id`, `name`, `value`, `role`) VALUES
+(1, 'Account', '', 'User'),
+(2, 'Password', '', 'User'),
+(3, 'AccountTesting', '', 'User'),
+(4, 'PasswordTesting', '', 'User'),
+(5, 'Environment', '', 'User'),
+(6, 'CreateDns', '1', 'User'),
+(7, 'RequireDomain', '1', 'User'),
+(9, 'DbVersion', '0.2', 'Admin')
 
 INSERT INTO mod_asciossl (user_id,whmcs_service_id,order_id,type,status,module,period,code,message,verification_type)
 SELECT `userid`, `serviceid`, `remoteid`,`certtype`,`status`,'autoinstallssl',1,0,null,"File" FROM `tblsslorders`
