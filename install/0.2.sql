@@ -75,7 +75,7 @@ CREATE TABLE `mod_asciossl_sans` (
   `dns_created` tinyint(1) NOT NULL,
   PRIMARY KEY (`id`),
    KEY `whmcs_service_id` (`service_id`),
-   KEY `name` (`name`);
+   KEY `name` (`name`)
 
 );
 
