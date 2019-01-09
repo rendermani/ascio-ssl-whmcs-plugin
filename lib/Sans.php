@@ -38,6 +38,9 @@ class Sans {
         if(isset($result[0])) {
             $this->data = []; 
             foreach($result as $key => $value) {
+                $value->verification_type = $this->ssl->verificationType;
+                $value->dns_name = str_replace($this->ssl->fqdn->getFqdn(), $value->name, $this->ssl->dnsName);
+                $value->dns_value = $this->ssl->dnsValue;
                 $this->data[$key] = (array) $value;
             }    
             $this->hasDbData = true;         
@@ -88,7 +91,6 @@ class Sans {
         return ["sans" => $this->data];
     }
     public function getSansIncluded () : int {
-        // todo: getSansIncluded this to validate the order
         $config = new CertificateConfig();
         $cert = $config->get($this->ssl->certificateType);
         return $cert->freeSans;        
