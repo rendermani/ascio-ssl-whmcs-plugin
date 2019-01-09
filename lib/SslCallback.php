@@ -27,11 +27,12 @@ class SslCallback extends Callback {
         if($this->status =="Completed") {
             $certificateHandle = $this->order->getOrderRequest()->getSslCertificate()->getHandle();
             $this->certificate = $this->ssl->getCertificate($certificateHandle);
+            $this->data["certificate_id"] = $certificateHandle;
             $this->data["expire_date"] = $this->certificate->getExpires();
         }
         $this->writeStatus();
         parent::ack();
-    } 
+        } 
     protected function writeCertificateData() {
         Capsule::table("mod_asciossl")
         ->where(["whmcs_service_id" => $this->serviceId])
@@ -43,7 +44,6 @@ class SslCallback extends Callback {
             if($this->validForDns()) {
                 $data = [];
                 try {
-                    // TODO Loop sans and create records
                     $data = $this->ssl->createDns($this->authName, $this->authValue);
                     $this->data["dns_created"] = true;
                     $this->data["dns_error_code"] = "";
@@ -64,15 +64,14 @@ class SslCallback extends Callback {
         $data = [];
         foreach($sans->data as $key => $san) {
             try {
-                $fqdn = new Fqdn($san["name"]);
-                // TODO use different values if necessary
-                $this->ssl->createDns($this->authName, $this->authValue,$fqdn);
+                $fqdn = new Fqdn($san["name"]);                
+                $this->ssl->createDns($san["dns_name"], $san["dns_value"],$fqdn);
                 $san["dns_created"] = true;
                 $san["dns_error_code"] = "";
                 $san["dns_error_message"] = "";
                 $san["verification_type"] = $this->ssl->data["verification_type"];
             } catch (AscioUserException $e) {
-                logModuleCall("asciossl", "Register SSL", $san, $e, json_encode($e));    
+                logModuleCall("asciossl", "Create DNS", $san, $e, json_encode($e));    
                 echo "DNS Creation Error: ". $e->getMessage()."\n";
                 $san["dns_error_code"] = $e->getTemplateCode();
                 $san['dns_error_message'] = $e->getMessage();
