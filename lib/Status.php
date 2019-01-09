@@ -1,5 +1,7 @@
 <?php
 namespace ascio\whmcs\ssl;
+require_once(__DIR__."/../vendor/autoload.php");
+use ascio\ssl\CertificateConfig;
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Spatie\SslCertificate\SslCertificate;
 
@@ -14,7 +16,7 @@ Class Status {
     /**
      * @var Fqdn $fqdn Full qualified domain name
      */
-    private $fqdn;
+    public $fqdn;
     public $data; 
     private $messages = [];
     private $instructions; 
@@ -44,11 +46,15 @@ Class Status {
         $html = "";
         foreach($this->messages as $key => $message) {
             $html .= $message->getHtml();
-        }
-        return '<h4>'.$this->title.'</h4>'.$html;
+        }  
+        $certName = $this->fqdn->getFqdn() ?  "<b>".$this->fqdn->getFqdn()."</b>" : "Additional Name: <b>".$this->data->name."</b>";
+        $sans = $this->data->sans ? " (".$this->data->sans .") SANs" : "";        
+        return '<h4>'.$certName.$sans.'</h4>'.$html; 
     }
     public function getInstructionsHtml() {
         if($this->isFinished()) return;
+        if($this->data->status != "Pending_End_User_Action") return;
+        if($this->data->dns_created == 1)  return; 
         return $this->instructions->getHtml();
     }
     public function isFinished() {
@@ -61,7 +67,7 @@ Class Status {
     }
     private function readDb() {
         $data = Capsule::table('mod_asciossl')
-        ->select(['message','status','errors','common_name','verification_type','approval_email','dns_name','dns_value','dns_error_code','dns_error_message','create_dns_record','dns_created',"expire_date"])
+        ->select(['type','message','status','errors','common_name','verification_type','approval_email','dns_name','dns_value','dns_error_code','dns_error_message','create_dns_record','dns_created',"expire_date"])
         ->where('whmcs_service_id',$this->serviceId)
         ->first();
         if($data->errors) {
@@ -74,11 +80,7 @@ Class Status {
     }
     public function setData($data) {
         $this->data = (object) $data;
-        $this->data->status = $this->data->status ? $this->data->status : $message;         
-        $name = $data->common_name  ? $data->common_name : $data->name;
-        $this->data->common_name = $name; 
-
-        $this->fqdn = new Fqdn($name);
+        $this->fqdn = new Fqdn($this->data->common_name);
         // set the verification type
         if($this->data->verification_type == "Dns") {
             if($this->data->dns_name=="DNS TXT Record") {
@@ -92,6 +94,11 @@ Class Status {
         // order instructions
         $this->messages = [];
         $this->instructions = new Instructions($this->type,$this->data);
+    }
+    public function setSanData($data) {
+        $data = (object) $data;
+        $data->common_name = $data->name; 
+        $this->setData($data);
     }
     public function setTitle($title) {
         $this->title = $title; 
@@ -116,7 +123,7 @@ Class Status {
             $errors = $this->data->errors;
             $message->text = $this->data->status . ". " . join($errors,"<br/>");
         }
-        $message->title ="Order Status"; 
+        $message->title ="<b>Order Status</b>"; 
         $this->messages["order"] = $message;
     }
     private function setDns() {
@@ -150,9 +157,9 @@ Class Status {
         if($this->type=="Cname") {
             $whatsmydnsUrl = "https://www.whatsmydns.net/#CNAME/".$this->data->dns_name."/".$this->data->dns_value;            
         } else {
-            $whatsmydnsUrl = "https://www.whatsmydns.net/#TXT/_dnsauth.".$this->fqdn->getDomain()."/".$this->data->dns_value;   
+            $whatsmydnsUrl = "https://www.whatsmydns.net/#TXT/".$this->fqdn->getSslAuth()."/".$this->data->dns_value;   
         }
-        $whatsmydnsLink = '<a target="dns" href="'.$whatsmydnsUrl.'">check WhatsMyDns.net</a>';
+        $whatsmydnsLink = '<a target="dns" href="'.$whatsmydnsUrl.'">Lookup WhatsMyDns.net</a>';
         $message = new StatusMessage("dig");
         $dns = new Dns(new Params(), $this->fqdn);
         $dig = $dns->digVerification($this->data->dns_name,$this->data->dns_value);
@@ -212,6 +219,19 @@ Class Status {
         $message->status = "Completed";
         $message->text =date("jS F  Y",strtotime($this->data->expire_date." 00:00:01"));
         $message->title = "Expire Date";
+        $this->messages["expire"] = $message;
+    }
+    public function setActions() {
+        if(!($this->data->status == "Completed" )) {
+            return;
+        }
+        $download = '<a href="?action=productdetails&id='.$this->serviceId.'&modop=custom&a=download"  type="button" class="btn btn-success">Download Certificate</a>';
+        $reissue = '<a href="?action=productdetails&id='.$this->serviceId.'&ordertype=reissue"  type="button" class="btn btn-success">Reissue Certificate</a>';
+        $message = new StatusMessage("download");
+        $message->icon = "download";
+        $message->status = "Completed";
+        $message->text = $download. " ". $reissue;
+        $message->title = "Actions";
         $this->messages["expire"] = $message;
     }
     private function setSslLabs() {
@@ -292,13 +312,13 @@ Class Instructions {
     public function getHtml() {
         $this->get(); 
         if(!$this->message) return "";   
-        $messages = '<div class="alert alert-success">'.$this->message.'</div>';
+        $messages = '<div class="alert alert-warning">'.$this->message.'</div>';
         foreach($this->fields as $key => $field) {
             foreach($field as $key => $value) {
                 $messages .= '
-                <div class="row">
-                    <div class="col-sm-3">'.$key.'</div>    
-                    <div class="col-sm-9">'.$value.'</div>   
+                <div class="row" style="font-size:11px">
+                    <div class="col-sm-1">'.$key.'</div>    
+                    <div class="col-sm-11">'.$value.'</div>   
                 </div>';
             }           
          
