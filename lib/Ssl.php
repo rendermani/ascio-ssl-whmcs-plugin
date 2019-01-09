@@ -10,6 +10,8 @@ require_once(__DIR__."/Sans.php");
 
 use Illuminate\Database\Capsule\Manager as Capsule;
 use ascio\v3 as v3;
+use ascio\ssl\CertificateConfig;
+use ascio\ssl\CertConfig;
 
 class Ssl {
     public $data =[];
@@ -45,6 +47,8 @@ class Ssl {
      * @var Sans $sans SAN Management
      */
     protected $sans;
+    public $dnsName;
+    public $dnsValue; 
     public function __construct(Params $params)
     {        
         $this->sans = new Sans($this);
@@ -120,14 +124,25 @@ class Ssl {
                 default : $data->period = 1; 
             }
             $this->verificationType = $data->verification_type; 
+            $this->dnsName = $data->dns_name;
+            $this->dnsValue = $data->dns_value;
             $this->sans->readDb();
         }
         $data->errors = \json_decode($data->errors);
+        //$this->data = array_merge((array) $data, $this->data);
         return $data;
     }
-    function register($contacts) : array { 
+    function register($contacts) : array {
+        return $this->submit($contacts,v3\OrderType::Register);
+    }
+    function renew($contacts) : array {
+        return $this->submit($contacts,v3\OrderType::Renew);
+    }
+    function reissue($contacts) : array {
+        return $this->submit($contacts,v3\OrderType::DetailsUpdate);
+    }
+    function submit($contacts, $orderType) : array { 
         $data = $this->readDb();
-
         $owner =  new v3\Registrant();
         $contacts->setRequestFields($owner,"owner");    
         $admin =  new v3\Contact();
@@ -136,7 +151,12 @@ class Ssl {
         $contacts->setRequestFields($tech,"tech");
     
         $sslCertificate =  new v3\SslCertificate();
-        $sslCertificate->setCommonName($data->common_name);
+        if($orderType==v3\OrderType::DetailsUpdate) {
+            $sslCertificate->setHandle($data->certificate_id);
+        } else {
+            $sslCertificate->setCommonName($data->common_name);
+        }
+        
         $sslCertificate->setProductCode($data->type);
         $sslCertificate->setWebServerType( $data->webserver);
         $sslCertificate->setApproverEmail($data->approval_email. $this->sans->getApprovalAddresses());
@@ -148,11 +168,10 @@ class Ssl {
         $sslCertificate->setSanNames($this->sans->getArray());
        
         $request =  new v3\SslCertificateOrderRequest();
-        $request->setType(v3\OrderType::Register);
+        $request->setType($orderType);
         $request->setPeriod($data->period);
         $request->setTransactionComment("WHMCS SSL Module");
         $request->setSslCertificate($sslCertificate);
-       
         try {
             /**
              * @var v3\CreateOrderResult $createOrderResponse 
@@ -186,6 +205,15 @@ class Ssl {
         return $result;
        
     }
+    public function getDownloadLink() {
+        //TODO: Create Link
+        return $this->serviceId;
+    }
+    public function getCertificateConfig() : CertConfig {
+        $config = new CertificateConfig();
+        $cert = $config->get($this->data["type"]);   
+        return $cert; 
+    }
     /**
      * @param string $certificateHandle 
      * @return  v3\SslCertificate
@@ -217,8 +245,9 @@ class Ssl {
         ->first();
 
 
-        if(!isset($domain)) {
-               throw new AscioUserException("Domain '".$fqdn->getDomain()."' not found in your Account. ",404,"no_ns_domain");
+        if(!isset($domain) && $this->params->requireDomain) {
+            //TODO: test with live account. Doesn't work
+            //       throw new AscioUserException("Domain '".$fqdn->getDomain()."' not found in your Account. ",404,"no_ns_domain");
         }
         
         $domain = new Domain($fqdn->getDomain());
