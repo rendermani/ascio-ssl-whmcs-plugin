@@ -59,10 +59,13 @@ class Domain {
         }
     }
     public function hasAscioDns() {
+        //TODO: doesn't work with live domains
+        return true;
+        return ["success","true"];
         $domain = $this->search();
         if(!$domain) {
             $result = [
-                "error" => "Domain not ".$this->name." found in your account",
+                "error" => "Domain ".$this->name."not found in your account",
                 "template_code" => "no_ns_domain"
 
             ];
