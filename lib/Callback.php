@@ -48,7 +48,8 @@ class Callback {
             $this->status =="Failed"|| 
             $this->status =="Invalid"|| 
             $this->status =="Completed" ||
-            $this->status =="Order not validated" 
+            $this->status =="Order not validated" ||
+            $this->status =="Pending_End_User_Action" 
             ) {
                 $this->getOrder();
         }
