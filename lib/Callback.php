@@ -56,12 +56,13 @@ class Callback {
         $this->data["status"]  = $this->status; 
     }
     public function writeStatus($whmcsStatus=null){
-        $result = Capsule::table("mod_asciossl")
+        try {
+            $result = Capsule::table("mod_asciossl")
             ->where("order_id",$this->orderId)
             ->update($this->data); 
-        if(!$result) {
-            //throw new AscioSystemException("Database update error");
-        }
+        } catch (\Exception $e){
+            throw new AscioSystemException("Error updating status: {$e->getMessage()}");
+        }        
         $this->setWhmcsStatus($whmcsStatus);
     }
     public function setWhmcsStatus($status=null) {
@@ -117,9 +118,9 @@ class Callback {
             throw new Exception($result->getResultMessage());
         }   
         $this->fqdn  = new Fqdn($result->getOrderInfo()->getOrderRequest()->getSslCertificate()->getCommonName());
-        $this->order = $result->getOrderInfo();        
+        $this->order = $result->getOrderInfo();       
     }
-    public function getMessage($messageId,$message) {
+    public function getMessage($messageId,$message=null) {
         $this->messageId = $messageId;
         if($message) {
             $this->message = $message;
@@ -127,12 +128,12 @@ class Callback {
         }
         $request =  new v3\GetQueueMessageRequest();
         $request->setMessageId($this->messageId);
-        try {
+        try {            
              $response = $this->client->GetQueueMessage(new v3\GetQueueMessage($request));
         } catch (\Exception $e) {
                 throw new AscioSystemException($e->faultcode,$e->faultstring);                
         }
-        $this->message = $response->GetQueueMessageResult->Messsage;
+        $this->message = $response->GetQueueMessageResult->getMessage();
         return $this->message;
     }
 }
