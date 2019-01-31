@@ -17,7 +17,7 @@ class SslContacts  {
     public function getDropDownOptions($selectedId = NULL) {        
         $postData = array('userid' => $this->clientId );
         $results = localAPI('GetContacts', $postData);
-        $options = '<option value="newcontact">New Contact</option>';
+        $options = '<option value="newcontact">New Contact</option><option value="client">Current Client</option>';
         foreach ($results["contacts"]["contact"] as $key => $contact) {
             $company = $contact["companyname"] ? " (".$contact["companyname"].")" : "";
             $name = $contact["firstname"] ." ". $contact["lastname"] .$company;
@@ -114,8 +114,6 @@ class SslContacts  {
 
     }
     public function getFromApi ($contactId, $lowerCase=true) {
-        $postData = array('userid' => $this->clientId );
-        $results = localAPI('GetContacts', $postData);
         $fieldList = [
             "address1" => "Address1",
             "address2" => "Address2",
@@ -131,9 +129,22 @@ class SslContacts  {
             "postcode" => "Postcode",
             "state" => "State"
         ];
+        
+        if($contactId == "client") {
+            $postData = array('clientid' => $this->clientId );
+            $client = localAPI('GetClientsDetails', $postData);
+            $results = [
+                "contacts" => [
+                    "contact" => [$client]
+                ]
+            ];
+        } else {
+            $postData = array('userid' => $this->clientId );
+            $results = localAPI('GetContacts', $postData);
+        }
 
         foreach($results["contacts"]["contact"] as $key => $contact) {
-            if($contact["id"] == $contactId) {        
+            if($contact["id"] == $contactId || $contactId == "client") {        
                 $newContact = [];
                 foreach($contact as $key => $value) {
                     if(in_array($key,\array_keys($fieldList))) {
