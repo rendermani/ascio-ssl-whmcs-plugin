@@ -4,7 +4,7 @@
     "fs" : {
         "versions" : [
             {
-                "version" : 0.2,
+                "version" : 0.21,
                 "description" : "Full SSL, Multi-Verification, SANs"
             },
             {
