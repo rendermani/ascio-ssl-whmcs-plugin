@@ -19,8 +19,10 @@ class SslCallback extends Callback {
      */
     protected $ssl;
     public function process($orderId,$status,$messageId,$message = null) {
-        parent::process($orderId,$status,$messageId,$message);    
+
+        parent::process($orderId,$status,$messageId,$message);          
         $this->ssl = new Ssl($this->params);
+        $this->ssl->fqdn = $this->fqdn;
         $this->ssl->readDb();
         $this->processMessage();
         
