@@ -102,24 +102,11 @@ function getStateSelectClass(data)
     return addClass;
 }
 
-function testajax () {
-    $.ajax({
-        url: "modules/servers/asciossl/getcontact.php",
-        datatype : "json",
-        data: { contactId: 1 }
-      }).done(function(data) {
-         $("#testresult").html(data);
-         setContactData(type,data);
-         //$("#ownerPhone").intlTelInput('setCountry',"gb");
-         
-
-      });
-}
 function setContactData(type,data) {
     $.ajax({
         url: "modules/servers/asciossl/getcontact.php",
         datatype : "json",
-        data: { contactId: 1 }
+        data: { contactId: $("#"+type+"Id").val()}
       }).done(function(data) {
          Object.keys(data).forEach((key) => {
             var value = data[key];
@@ -202,7 +189,8 @@ function checkCsr() {
 function setVerificationType() {
     var verificationType = $("#verificationType").val();
     if(verificationType == "Dns" || verificationType == "File") {
-        $("#approvalEmail").val("admin@"+$("#domainroot").val());
+        var defaultAddress = "admin@"+$("#domainroot").val();
+        $("#approvalEmail").val(defaultAddress);
     } 
     if(verificationType == "Email") {
         $("#approvalEmailContainer").show();
