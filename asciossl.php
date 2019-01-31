@@ -551,8 +551,7 @@ function asciossl_download(array $whmcsParams) {
     $params = new ssl\Params($whmcsParams);
     $ssl = new ssl\Ssl($params);
     $sslData = $ssl->readDb();
-    $certificate =  $ssl->getCertificate($ssl->data["certificate_id"]);
-    
+    $certificate =  $ssl->getCertificate($sslData->certificate_id);
     $name = $ssl->getCertificateConfig()->name."-" .$ssl->fqdn->getFqdn().".crt";
     $name = str_replace(" ","_",$name);
 
@@ -585,7 +584,6 @@ function asciossl_reissue(array $whmcsParams) {
 function asciossl_ClientArea(array $whmcsParams)
 {    
     // autoinstall SSL 
-  
     if( $params["customfields"]["AutoInstallSsl"] =="on") {
         return "<p></p><h4>AutoInstallSSL Token:</h4> <span>".$update["AutoInstallSsl Token"]."</span><p></p>";
     } 
