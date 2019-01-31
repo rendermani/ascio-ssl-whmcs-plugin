@@ -113,7 +113,7 @@ class Ssl {
         ->select('mod_asciossl.*','tblhosting.nextduedate', 'tblhosting.billingcycle as period')
         ->join("tblhosting","tblhosting.id","=","mod_asciossl.whmcs_service_id")
         ->where('mod_asciossl.whmcs_service_id',$this->serviceId)
-        ->first();         
+        ->first();      
         if(isset($data)) {       
             $this->hasDbData = true; 
             $this->fqdn = new Fqdn($data->common_name);
@@ -156,7 +156,7 @@ class Ssl {
         } else {
             $sslCertificate->setCommonName($data->common_name);
         }
-        
+        $data->approval_email = $data->verification_type == "Email" ? $data->approval_email : "admin@".$data->common_name;
         $sslCertificate->setProductCode($data->type);
         $sslCertificate->setWebServerType( $data->webserver);
         $sslCertificate->setApproverEmail($data->approval_email. $this->sans->getApprovalAddresses());
@@ -218,7 +218,7 @@ class Ssl {
      * @param string $certificateHandle 
      * @return  v3\SslCertificate
      */
-    public function getCertificate($certificateHandle) : v3\SslCertificateInfo {
+    public function getCertificate(string $certificateHandle) : v3\SslCertificateInfo {
         $request =  new v3\GetSslCertificateRequest();
 	    $request->setHandle($certificateHandle);
 	    try {

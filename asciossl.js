@@ -143,7 +143,6 @@ function copyContactData(fromType,toType) {
     var titleTxt = fromType == "owner" ? "Owner" : "Administrative";
     title.html("Update from "+titleTxt+ " Contact");
 }
-
 function checkCsr() {
     if(!$("#csr").val() ) return;
     $.ajax({
@@ -191,13 +190,17 @@ function setVerificationType() {
     if(verificationType == "Dns" || verificationType == "File") {
         var defaultAddress = "admin@"+$("#domainroot").val();
         $("#approvalEmail").val(defaultAddress);
+        $("#approvalEmail").removeAttr("required");
     } 
     if(verificationType == "Email") {
         $("#approvalEmailContainer").show();
         $("#mxverification").show();
+        $("#approvalEmail").attr("required",true);
     } else {
         $("#approvalEmailContainer").hide();
         $("#mxverification").hide();
+        $("#approvalEmail").removeAttr("required");
+        
     }
     setSanVerificationType();
 }
@@ -210,12 +213,14 @@ function setSanVerificationType() {
         $(".san-no-email").each((nr,san) => {
             $(san).hide();
             $("#SanEmail_"+nr).show();
+            $("#SanEmail_"+nr).attr("required",true);
         });
     } else {
         $(".san-no-email").each((nr,san) => {
             $(san).show();
-            $(san).html(verificationType+"-Verification")
+            $(san).html(verificationType+"-Verification");            
             $("#SanEmail_"+nr).hide();
+            $("#SanEmail_"+nr).removeAttr("required");
         });
     }
 }

@@ -98,7 +98,12 @@ class Sans {
     public function getApprovalAddresses() {
         $addresses = [];
         foreach($this->data as $key => $san) {
-            $addresses[] = $san["email"];
+            if($this->ssl->verificationType =="Email") {
+                $addresses[] = $san["email"];
+            } else {
+                $addresses[] = "admin@".$san["name"];
+            }
+            
         }
         if($addresses[0]) return ",".join($addresses,",");
     }
