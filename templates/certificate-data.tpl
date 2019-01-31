@@ -56,7 +56,7 @@
                 <div class="col-sm-8 col-xs-12 pull-right">
                     <div class="form-group" id="approvalEmailContainer">
                         <label for="approvalEmail" class="control-label">Approval E-Mail</label>
-                        <select required="required" type="text" name="approvalEmail" id="approvalEmail" value="{$approval_email}" class="form-control" ></select>
+                        <select {if $verification_type eq "Email"}required="true"{/if} type="text" name="approvalEmail" id="approvalEmail" value="{$approval_email}" class="form-control" ></select>
                     </div>
                 </div>           
             </div>
