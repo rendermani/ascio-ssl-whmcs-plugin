@@ -48,8 +48,10 @@ Class Status {
             $html .= $message->getHtml();
         }  
         $certName = $this->fqdn->getFqdn() ?  "<b>".$this->fqdn->getFqdn()."</b>" : "Additional Name: <b>".$this->data->name."</b>";
-        $sans = $this->data->sans ? " (".$this->data->sans .") SANs" : "";        
-        return '<h4>'.$certName.$sans.'</h4>'.$html; 
+        $sans = $this->data->sans ? " (".$this->data->sans .") SANs" : "";    
+        $link = '<a class="btn btn-warning" href="clientarea.php?action=productdetails&id='.$this->serviceId.'">Resubmit order</a>';
+        $retry = $this->data->code=="200" ? "" : $link;
+        return '<h4>'.$certName.$sans.'</h4>'.'<p>'.$retry.'</p>'.$html; 
     }
     public function getInstructionsHtml() {
         if($this->isFinished()) return;
@@ -67,7 +69,7 @@ Class Status {
     }
     private function readDb() {
         $data = Capsule::table('mod_asciossl')
-        ->select(['type','message','status','errors','common_name','verification_type','approval_email','dns_name','dns_value','dns_error_code','dns_error_message','create_dns_record','dns_created',"expire_date"])
+        ->select(['type','message','status','errors','code','common_name','verification_type','approval_email','dns_name','dns_value','dns_error_code','dns_error_message','create_dns_record','dns_created',"expire_date"])
         ->where('whmcs_service_id',$this->serviceId)
         ->first();
         if($data->errors) {
@@ -105,15 +107,15 @@ Class Status {
     }
     public function setOrder() {
         $message = new StatusMessage("order");
-        switch($this->data->status) {
-            case "Completed" : $message->icon = "ok"; break;
-            case "Failed" : $message->icon = "remove"; break;
-            case "Invalid" : $message->icon = "remove"; break;
-            case "Order not validated" : $message->icon = "remove"; break;
-            default : $message->icon = "time"; break;
-        } 
-        if(strpos($this->data->status,"Pending")!==false) {
+        if($this->data->code > 200)  {
+            $message->icon = "remove";
+            $message->status = $this->data->status;
+        } elseif($this->data->code == 200) {
+            $message->icon = "ok"; 
+            $message->status = $this->data->status;
+        } elseif(strpos($this->data->status,"Pending")!==false) {
             $message->status = "Pending";
+            $message->icon = "time";
         } else {
             $message->status = $this->data->status;
         }
