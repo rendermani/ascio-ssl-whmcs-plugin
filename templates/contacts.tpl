@@ -42,7 +42,7 @@
 
                 <div class="form-group">
                     <label for="ownerCompanyName" class="control-label">{$LANG.clientareacompanyname}</label>
-                    <input required="required" type="text" name="ownerCompanyName" id="ownerCompanyName" value="{$ownercompanyname}" class="form-control" />
+                    <input  type="text" name="ownerCompanyName" id="ownerCompanyName" value="{$ownercompanyname}" class="form-control" />
                 </div>
 
                 <div class="form-group">
@@ -126,7 +126,7 @@
 
                 <div class="form-group">
                     <label for="adminCompanyName" class="control-label">{$LANG.clientareacompanyname}</label>
-                    <input required="required" type="text" name="adminCompanyName" id="adminCompanyName" value="{$admincompanyname}" class="form-control" />
+                    <input type="text" name="adminCompanyName" id="adminCompanyName" value="{$admincompanyname}" class="form-control" />
                 </div>
 
                 <div class="form-group">
@@ -211,7 +211,7 @@
 
                 <div class="form-group">
                     <label for="techCompanyName" class="control-label">{$LANG.clientareacompanyname}</label>
-                    <input required="required" type="text" name="techCompanyName" id="techCompanyName" value="{$techcompanyname}" class="form-control" />
+                    <input type="text" name="techCompanyName" id="techCompanyName" value="{$techcompanyname}" class="form-control" />
                 </div>
 
                 <div class="form-group">
