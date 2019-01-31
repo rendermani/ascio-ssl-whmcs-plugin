@@ -31,10 +31,10 @@ class SslCallback extends Callback {
             $this->certificate = $this->ssl->getCertificate($certificateHandle);
             $this->data["certificate_id"] = $certificateHandle;
             $this->data["expire_date"] = $this->certificate->getExpires();
-        }
+        }    
         $this->writeStatus();
-        parent::ack();
-        } 
+        parent::ack();       
+    } 
     protected function writeCertificateData() {
         Capsule::table("mod_asciossl")
         ->where(["whmcs_service_id" => $this->serviceId])
@@ -59,6 +59,10 @@ class SslCallback extends Callback {
                     $this->data["dns_error_message"] = $e->getMessage();
                 }                
             }
+        }
+        if($this->status=="Failed" || $this->status=="Invalid") { 
+            $message = $this->getMessage($this->messageId);
+            $this->data["message"] = $message->getMessage();
         }
     }
     private function createSanDns() {
